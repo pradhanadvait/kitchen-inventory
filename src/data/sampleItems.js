@@ -1,0 +1,42 @@
+export const SAMPLE_ITEMS = [
+  {
+    id: 1,
+    name: 'Tomatoes',
+    quantity: 5,
+    unit: 'pieces',
+    category: 1,
+    expiryDate: '2026-04-15',
+  },
+  {
+    id: 2,
+    name: 'Milk',
+    quantity: 2,
+    unit: 'L',
+    category: 3,
+    expiryDate: '2026-03-25',
+  },
+  {
+    id: 3,
+    name: 'Chicken Breast',
+    quantity: 1,
+    unit: 'kg',
+    category: 4,
+    expiryDate: '2026-03-22',
+  },
+  {
+    id: 4,
+    name: 'Rice',
+    quantity: 3,
+    unit: 'kg',
+    category: 5,
+    expiryDate: '2027-03-18',
+  },
+  {
+    id: 5,
+    name: 'Bananas',
+    quantity: 2,
+    unit: 'bunches',
+    category: 2,
+    expiryDate: '2026-03-21',
+  },
+]
