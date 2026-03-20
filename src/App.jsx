@@ -1,126 +1,120 @@
-import { useState } from 'react'
-import Header from './components/layout/Header'
-import StatsBar from './components/layout/StatsBar'
-import CategorySection from './components/inventory/CategorySection'
-import AddEditItemModal from './components/modals/AddEditItemModal'
-import SearchBar from './components/ui/SearchBar'
-import CategoryPill from './components/ui/CategoryPill'
+import React, { useState } from 'react'
 import { useInventory } from './hooks/useInventory'
 import { CATEGORIES } from './data/categories'
-import { SAMPLE_ITEMS } from './data/sampleItems'
-import { filterItemsBySearch } from './utils/inventoryHelpers'
-import './styles/globals.css'
+import Header from './components/layout/Header'
+import StatsBar from './components/layout/StatsBar'
+import CategoryPill from './components/ui/CategoryPill'
+import ItemList from './components/inventory/ItemList'
+import AddEditItemModal from './components/modals/AddEditItemModal'
 
-function App() {
-  const { items, addItem, updateItem, deleteItem, getItemsByCategory } = useInventory(SAMPLE_ITEMS)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState(null)
-  const [showModal, setShowModal] = useState(false)
-  const [editingItem, setEditingItem] = useState(null)
+export default function App() {
+  const {
+    loading, error,
+    search, setSearch,
+    activeCategory, setActiveCategory,
+    groupedItems, stats, activeCategoryIds,
+    addItem, updateItem, deleteItem,
+  } = useInventory()
 
-  const filteredItems = filterItemsBySearch(items, searchTerm)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editItem, setEditItem] = useState(null)
 
-  const handleAddNew = () => {
-    setEditingItem(null)
-    setShowModal(true)
+  const handleAddClick = () => { setEditItem(null); setModalOpen(true) }
+  const handleEditItem = item => { setEditItem(item); setModalOpen(true) }
+  const handleClose = () => { setModalOpen(false); setEditItem(null) }
+
+  const handleSave = async (formData) => {
+    if (editItem) await updateItem(editItem.id, formData)
+    else await addItem(formData)
+    handleClose()
   }
 
-  const handleEdit = (item) => {
-    setEditingItem(item)
-    setShowModal(true)
-  }
-
-  const handleSaveItem = (formData) => {
-    if (editingItem) {
-      updateItem(editingItem.id, formData)
-    } else {
-      addItem(formData)
-    }
-    setShowModal(false)
-    setEditingItem(null)
-  }
-
-  const handleDeleteItem = (id) => {
-    deleteItem(id)
-  }
-
-  const lowStockCount = items.filter(item => item.quantity <= 2).length
+  const visibleCategories = CATEGORIES.filter(c => activeCategoryIds.has(c.id))
 
   return (
-    <div className="app">
-      <Header />
-      <StatsBar total={items.length} lowStock={lowStockCount} />
-      
-      <div style={{ padding: 'var(--space-lg)' }}>
-        <SearchBar value={searchTerm} onChange={setSearchTerm} />
-        
-        <div style={{ margin: 'var(--space-lg) 0', display: 'flex', flexWrap: 'wrap' }}>
-          <CategoryPill
-            category={{ id: null, name: 'All', color: '#3b82f6' }}
-            isActive={selectedCategory === null}
-            onClick={() => setSelectedCategory(null)}
+    <div style={{
+      maxWidth: 480,
+      margin: '0 auto',
+      height: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      background: 'var(--color-bg)',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      <Header
+        search={search}
+        onSearchChange={setSearch}
+        onAddClick={handleAddClick}
+      />
+      <StatsBar stats={stats} />
+
+      {/* Category filter pills */}
+      <div
+        className="hide-scrollbar"
+        style={{
+          display: 'flex',
+          gap: 7,
+          padding: '10px 16px',
+          overflowX: 'auto',
+          background: 'var(--color-surface)',
+          borderBottom: '1px solid var(--color-border)',
+          flexShrink: 0,
+        }}
+      >
+        <CategoryPill label="All" active={activeCategory === 'all'} onClick={() => setActiveCategory('all')} />
+        {visibleCategories.map(c => (
+          <CategoryPill key={c.id} label={c.label} icon={c.icon}
+            active={activeCategory === c.id}
+            onClick={() => setActiveCategory(c.id)}
           />
-          {CATEGORIES.map((cat) => (
-            <CategoryPill
-              key={cat.id}
-              category={cat}
-              isActive={selectedCategory === cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-            />
-          ))}
-        </div>
-
-        <button
-          onClick={handleAddNew}
-          style={{
-            padding: 'var(--space-md) var(--space-lg)',
-            marginBottom: 'var(--space-lg)',
-            backgroundColor: '#10b981',
-            color: 'white',
-            border: 'none',
-            borderRadius: 'var(--radius-md)',
-            cursor: 'pointer',
-            fontSize: '1rem',
-            fontWeight: '600',
-          }}
-        >
-          + Add New Item
-        </button>
-
-        {CATEGORIES.map((category) => {
-          const categoryItems = selectedCategory === null || selectedCategory === category.id
-            ? filteredItems.filter(item => item.category === category.id)
-            : []
-          
-          if (categoryItems.length === 0 && selectedCategory !== null && selectedCategory !== category.id) {
-            return null
-          }
-
-          return (
-            <CategorySection
-              key={category.id}
-              category={category}
-              items={categoryItems}
-              onEdit={handleEdit}
-              onDelete={handleDeleteItem}
-            />
-          )
-        })}
+        ))}
       </div>
 
-      {showModal && (
-        <AddEditItemModal
-          item={editingItem}
-          categories={CATEGORIES}
-          onSave={handleSaveItem}
-          onClose={() => {
-            setShowModal(false)
-            setEditingItem(null)
-          }}
-        />
-      )}
+      {/* Main content */}
+      <div className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '14px 16px' }}>
+        {error ? (
+          <ErrorState message={error} />
+        ) : loading ? (
+          <LoadingState />
+        ) : (
+          <ItemList groupedItems={groupedItems} onEdit={handleEditItem} onDelete={deleteItem} />
+        )}
+      </div>
+
+      <AddEditItemModal
+        isOpen={modalOpen}
+        editItem={editItem}
+        onSave={handleSave}
+        onClose={handleClose}
+      />
     </div>
   )
 }
 
-export default App
+function LoadingState() {
+  return (
+    <div style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--color-text-tertiary)' }}>
+      <div style={{ fontSize: 32, marginBottom: 12 }}>⏳</div>
+      <div style={{ fontSize: 14 }}>Loading your kitchen...</div>
+    </div>
+  )
+}
+
+function ErrorState({ message }) {
+  return (
+    <div style={{
+      margin: '24px 0',
+      padding: '16px',
+      background: '#FCEBEB',
+      border: '1px solid #F09595',
+      borderRadius: 'var(--radius-md)',
+      color: '#A32D2D',
+      fontSize: 14,
+    }}>
+      <strong>Connection error</strong><br />
+      {message}<br /><br />
+      Check that your Firebase config in <code>src/lib/firebase.js</code> is correct and Firestore is enabled.
+    </div>
+  )
+}

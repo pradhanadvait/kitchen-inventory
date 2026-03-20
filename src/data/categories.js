@@ -1,10 +1,29 @@
 export const CATEGORIES = [
-  { id: 1, name: 'Vegetables', color: '#10b981' },
-  { id: 2, name: 'Fruits', color: '#f59e0b' },
-  { id: 3, name: 'Dairy', color: '#3b82f6' },
-  { id: 4, name: 'Meat & Fish', color: '#ef4444' },
-  { id: 5, name: 'Grains & Bread', color: '#d97706' },
-  { id: 6, name: 'Pantry', color: '#8b5cf6' },
-  { id: 7, name: 'Beverages', color: '#06b6d4' },
-  { id: 8, name: 'Frozen', color: '#0ea5e9' },
+  { id: 'produce',    label: 'Produce',     icon: '🥦' },
+  { id: 'dairy',      label: 'Dairy',       icon: '🥛' },
+  { id: 'meat',       label: 'Meat',        icon: '🥩' },
+  { id: 'grains',     label: 'Grains',      icon: '🌾' },
+  { id: 'snacks',     label: 'Snacks',      icon: '🍿' },
+  { id: 'drinks',     label: 'Drinks',      icon: '🧃' },
+  { id: 'condiments', label: 'Condiments',  icon: '🫙' },
+  { id: 'frozen',     label: 'Frozen',      icon: '🧊' },
 ]
+
+export const CATEGORY_MAP = Object.fromEntries(
+  CATEGORIES.map(c => [c.id, c])
+)
+
+export const CATEGORY_COLORS = {
+  produce:    'var(--cat-produce)',
+  dairy:      'var(--cat-dairy)',
+  meat:       'var(--cat-meat)',
+  grains:     'var(--cat-grains)',
+  snacks:     'var(--cat-snacks)',
+  drinks:     'var(--cat-drinks)',
+  condiments: 'var(--cat-condiments)',
+  frozen:     'var(--cat-frozen)',
+}
+
+export const UNITS = ['pcs', 'kg', 'g', 'L', 'ml', 'pack', 'bottle', 'bag', 'box', 'bunch']
+
+export const LOW_STOCK_THRESHOLD = 2

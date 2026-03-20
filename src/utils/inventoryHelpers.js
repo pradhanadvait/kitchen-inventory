@@ -1,44 +1,47 @@
-export function filterItemsBySearch(items, searchTerm) {
-  if (!searchTerm) return items
-  return items.filter((item) =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+import { CATEGORIES, LOW_STOCK_THRESHOLD } from '../data/categories'
+
+export function isLowStock(item) {
+  return item.qty <= LOW_STOCK_THRESHOLD
 }
 
-export function sortItemsByName(items) {
-  return [...items].sort((a, b) => a.name.localeCompare(b.name))
-}
-
-export function sortItemsByExpiry(items) {
-  return [...items].sort((a, b) => {
-    if (!a.expiryDate) return 1
-    if (!b.expiryDate) return -1
-    return new Date(a.expiryDate) - new Date(b.expiryDate)
+export function filterItems(items, { search = '', category = 'all' }) {
+  return items.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase())
+    const matchesCat = category === 'all' || item.cat === category
+    return matchesSearch && matchesCat
   })
 }
 
-export function isLowStock(quantity, threshold = 2) {
-  return quantity <= threshold
-}
-
-export function getExpiringItems(items, daysThreshold = 7) {
-  const today = new Date()
-  return items.filter((item) => {
-    if (!item.expiryDate) return false
-    const expiryDate = new Date(item.expiryDate)
-    const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24))
-    return daysUntilExpiry <= daysThreshold && daysUntilExpiry > 0
+export function groupByCategory(items) {
+  const groups = {}
+  items.forEach(item => {
+    if (!groups[item.cat]) groups[item.cat] = []
+    groups[item.cat].push(item)
   })
+  // Return in canonical category order
+  return CATEGORIES
+    .filter(c => groups[c.id])
+    .map(c => ({ category: c, items: groups[c.id] }))
 }
 
-export function getExpiredItems(items) {
-  const today = new Date()
-  return items.filter((item) => {
-    if (!item.expiryDate) return false
-    return new Date(item.expiryDate) < today
-  })
+export function getStats(items) {
+  return {
+    total: items.length,
+    categories: new Set(items.map(i => i.cat)).size,
+    lowStock: items.filter(isLowStock).length,
+  }
 }
 
-export function getLowStockItems(items, threshold = 2) {
-  return items.filter((item) => isLowStock(item.quantity, threshold))
+export function getActiveCategoryIds(items) {
+  return new Set(items.map(i => i.cat))
+}
+
+export function createItem({ name, cat, qty, unit }) {
+  return {
+    id: Date.now(),
+    name: name.trim(),
+    cat,
+    qty: Number(qty) || 0,
+    unit,
+  }
 }
